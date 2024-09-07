@@ -18,7 +18,7 @@
 
 void pdf2bmp_version(void)
 {
-    std::printf("pdf2bmp by katahiromz Version 0.7\n");
+    std::printf("pdf2bmp by katahiromz Version 0.8\n");
 }
 
 void pdf2bmp_usage(void)
@@ -191,9 +191,16 @@ int pdf2bmp_main(int argc, _TCHAR **argv)
         return 0;
     }
 
-    if (!g_in_file || !g_out_file) // No files specified
+    if (!g_in_file)
     {
-        _ftprintf(stderr, _T("ERROR: No files specified\n"));
+        _ftprintf(stderr, _T("ERROR: No input file specified\n"));
+        pdf2bmp_usage();
+        return 1;
+    }
+
+    if (!g_out_file)
+    {
+        _ftprintf(stderr, _T("ERROR: No output file specified\n"));
         pdf2bmp_usage();
         return 1;
     }
