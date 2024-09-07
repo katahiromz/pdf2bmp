@@ -18,7 +18,7 @@
 
 void pdf2bmp_version(void)
 {
-    std::printf("pdf2bmp by katahiromz Version 1.0\n");
+    std::printf("pdf2bmp by katahiromz Version 1.1\n");
 }
 
 void pdf2bmp_usage(void)
@@ -35,7 +35,7 @@ void pdf2bmp_usage(void)
 }
 
 static void
-GetPDFPageSizeInPixels(FPDF_DOCUMENT doc, int page_index, double dpi_x, double dpi_y, int& width_pixels, int& height_pixels)
+pdf_page_size_in_pixels(FPDF_DOCUMENT doc, int page_index, double dpi_x, double dpi_y, int& width_pixels, int& height_pixels)
 {
     double width_points, height_points;
     FPDF_GetPageSizeByIndex(doc, page_index, &width_points, &height_points);
@@ -43,40 +43,6 @@ GetPDFPageSizeInPixels(FPDF_DOCUMENT doc, int page_index, double dpi_x, double d
     width_pixels = static_cast<int>(width_points * dpi_x / 72.0); // 1 point = 1/72 inches
     height_pixels = static_cast<int>(height_points * dpi_y / 72.0);
 }
-
-#ifdef UNICODE
-static BOOL
-BridgeWideFileName(char *ansi_filename, const WCHAR *wide_filename, BOOL bCopy)
-{
-    auto wide_dotext = PathFindExtensionW(wide_filename);
-
-    WCHAR szFmt[MAX_PATH], szPath[MAX_PATH];
-    for (int i = 0; i < 1024; ++i)
-    {
-        StringCchPrintfW(szFmt, _countof(szFmt), L"%%TEMP%%\\kh%06x%s", ((~GetTickCount()) & 0xFFFFFF), wide_dotext);
-        ExpandEnvironmentStringsW(szFmt, szPath, _countof(szPath));
-        if (bCopy)
-        {
-            if (!CopyFileW(wide_filename, szPath, TRUE))
-                continue;
-        }
-        else
-        {
-            if (PathFileExistsW(szPath))
-                continue;
-            FILE *fout = _wfopen(szPath, L"wb");
-            if (!fout)
-                continue;
-            fclose(fout);
-        }
-        WideCharToMultiByte(CP_ACP, 0, szPath, -1, ansi_filename, MAX_PATH, nullptr, nullptr);
-        ansi_filename[MAX_PATH - 1] = 0;
-        return TRUE;
-    }
-
-    return FALSE;
-}
-#endif
 
 static HBITMAP
 Create24BppBitmap(HDC hDC, INT width, INT height)
@@ -148,20 +114,6 @@ pdf2bmp_parse_cmdline(int argc, _TCHAR **argv)
 
     return RET_OK;
 }
-
-// Delete file automatically
-struct MDeleteFileA
-{
-    const char *m_file = nullptr;
-    MDeleteFileA(const char *file = nullptr) : m_file(file)
-    {
-    }
-    ~MDeleteFileA()
-    {
-        if (m_file)
-            DeleteFileA(m_file);
-    }
-};
 
 int pdf2bmp_main(int argc, _TCHAR **argv)
 {
@@ -240,7 +192,7 @@ int pdf2bmp_main(int argc, _TCHAR **argv)
 
     // Get page size in pixels
     int width_pixels, height_pixels;
-    GetPDFPageSizeInPixels(doc, 0, g_dpi, g_dpi, width_pixels, height_pixels);
+    pdf_page_size_in_pixels(doc, 0, g_dpi, g_dpi, width_pixels, height_pixels);
 
     //printf("Page size: %d x %d pixels\n", width_pixels, height_pixels);
 
