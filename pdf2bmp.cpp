@@ -13,12 +13,12 @@
     #include <crtdbg.h>
 #endif
 
-#include "fpdfview.h"
+#include "fpdfview.h" // PDFium library
 #include "SaveBitmapToFile.h"
 
 void pdf2bmp_version(void)
 {
-    std::printf("pdf2bmp by katahiromz Version 0.8\n");
+    std::printf("pdf2bmp by katahiromz Version 0.9\n");
 }
 
 void pdf2bmp_usage(void)
@@ -40,7 +40,7 @@ GetPDFPageSizeInPixels(FPDF_DOCUMENT doc, int page_index, double dpi_x, double d
     double width_points, height_points;
     FPDF_GetPageSizeByIndex(doc, page_index, &width_points, &height_points);
 
-    width_pixels = static_cast<int>(width_points * dpi_x / 72.0);  // 1 point = 1/72 inches
+    width_pixels = static_cast<int>(width_points * dpi_x / 72.0); // 1 point = 1/72 inches
     height_pixels = static_cast<int>(height_points * dpi_y / 72.0);
 }
 
@@ -105,9 +105,6 @@ enum RET
 static RET
 pdf2bmp_parse_cmdline(int argc, _TCHAR **argv)
 {
-    if (argc <= 1)
-        return RET_INVALID_ARGUMENTS;
-
     for (int iarg = 1; iarg < argc; ++iarg)
     {
         auto arg = argv[iarg];
