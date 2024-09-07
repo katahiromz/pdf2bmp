@@ -18,7 +18,7 @@
 
 void pdf2bmp_version(void)
 {
-    std::printf("pdf2bmp by katahiromz Version 0.9\n");
+    std::printf("pdf2bmp by katahiromz Version 1.0\n");
 }
 
 void pdf2bmp_usage(void)
@@ -44,6 +44,7 @@ GetPDFPageSizeInPixels(FPDF_DOCUMENT doc, int page_index, double dpi_x, double d
     height_pixels = static_cast<int>(height_points * dpi_y / 72.0);
 }
 
+#ifdef UNICODE
 static BOOL
 BridgeWideFileName(char *ansi_filename, const WCHAR *wide_filename, BOOL bCopy)
 {
@@ -61,18 +62,19 @@ BridgeWideFileName(char *ansi_filename, const WCHAR *wide_filename, BOOL bCopy)
         }
         else
         {
-            FILE *fout = _tfopen(szPath, _T("wb"));
-            if (!fout)
+            if (PathFileExistsW(szPath))
                 continue;
-            fclose(fout);
+            // Create
+            fclose(_tfopen(szPath, _T("wb")));
         }
-        WideCharToMultiByte(CP_ACP, 0, szPath, -1, ansi_filename, MAX_PATH, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, szPath, -1, ansi_filename, MAX_PATH, nullptr, nullptr);
         ansi_filename[MAX_PATH - 1] = 0;
         return TRUE;
     }
 
     return FALSE;
 }
+#endif
 
 static HBITMAP
 Create24BppBitmap(HDC hDC, INT width, INT height)
@@ -85,7 +87,7 @@ Create24BppBitmap(HDC hDC, INT width, INT height)
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 24;
     LPVOID pvBits;
-    return CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
+    return CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, nullptr, 0);
 }
 
 // Global variables
@@ -221,8 +223,8 @@ int pdf2bmp_main(int argc, _TCHAR **argv)
     // Load documents
 #ifdef UNICODE
     char in_file_a[MAX_PATH];
-    BridgeWideFileName(in_file_a, g_in_file, TRUE);
-    MDeleteFileA delete_file(in_file_a);
+    WideCharToMultiByte(CP_UTF8, 0, g_in_file, -1, in_file_a, _countof(in_file_a), nullptr, nullptr);
+    in_file_a[_countof(in_file_a) - 1] = 0;
 #else
     auto in_file_a = g_in_file;
 #endif
@@ -251,7 +253,7 @@ int pdf2bmp_main(int argc, _TCHAR **argv)
     }
 
     // Render the page
-    HDC hDC = CreateCompatibleDC(NULL);
+    HDC hDC = CreateCompatibleDC(nullptr);
     HBITMAP hbm = Create24BppBitmap(hDC, width_pixels, height_pixels);
     HGDIOBJ hbmOld = SelectObject(hDC, hbm);
     RECT rc = { 0, 0, width_pixels, height_pixels };
