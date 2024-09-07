@@ -64,8 +64,10 @@ BridgeWideFileName(char *ansi_filename, const WCHAR *wide_filename, BOOL bCopy)
         {
             if (PathFileExistsW(szPath))
                 continue;
-            // Create
-            fclose(_tfopen(szPath, _T("wb")));
+            FILE *fout = _wfopen(szPath, L"wb");
+            if (!fout)
+                continue;
+            fclose(fout);
         }
         WideCharToMultiByte(CP_ACP, 0, szPath, -1, ansi_filename, MAX_PATH, nullptr, nullptr);
         ansi_filename[MAX_PATH - 1] = 0;
